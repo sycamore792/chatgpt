@@ -6,27 +6,142 @@ import {
   PromptInputActions,
   PromptInputTextarea,
 } from "@/components/ui/prompt-input"
+import { ScrollButton } from "@/components/ui/scroll-button"
 import { Button } from "@/components/ui/button"
 import { ArrowUp, Paperclip, Square, X } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Sidebar } from "@/components/Sidebar"
 import { cn } from "@/lib/utils"
+import { MessageContent } from "@/components/ui/message"
+import { ChatContainer } from "@/components/ui/chat-container"
+import {
+  Message, MessageAction,
+  MessageActions,
+} from "@/components/ui/message"
+import { Copy, ThumbsDown, ThumbsUp } from "lucide-react"
 
 
 export default function Home() {
+  const [autoScroll, setAutoScroll] = useState(true)
+  const [isStreaming, setIsStreaming] = useState(false)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+  const streamIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const streamContentRef = useRef("")
+
+
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      role: "user",
+      content: "Hello! Can you help me with a coding question?",
+    },
+    {
+      id: 2,
+      role: "assistant",
+      content:
+        "## Of course! I'd be happy to help with your coding question. What would you like to know?",
+    },
+    {
+      id: 3,
+      role: "user",
+      content: "How do I create a responsive layout with CSS Grid?",
+    },
+    {
+      id: 4,
+      role: "assistant",
+      content:
+        " Creating a responsive layout with CSS Grid is straightforward. Here's a basic example:\n\n```css\n.container {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));\n  gap: 1rem;\n}\n```\n\nThis creates a grid where:\n- Columns automatically fit as many as possible\n- Each column is at least 250px wide\n- Columns expand to fill available space\n- There's a 1rem gap between items\n\nWould you like me to explain more about how this works?",
+    },
+  ])
+  useEffect(() => {
+    if (messages.length > 0 && messages[messages.length - 1].role === "user") {
+      streamResponse()
+    }
+  }, [messages]);
+  const streamResponse = () => {
+    if (isStreaming) return
+
+    setIsStreaming(true)
+    const fullResponse =
+      "Yes, I'd be happy to explain more about CSS Grid! The `grid-template-columns` property defines the columns in your grid. The `repeat()` function is a shorthand that repeats a pattern. `auto-fit` will fit as many columns as possible in the available space. The `minmax()` function sets a minimum and maximum size for each column. This creates a responsive layout that automatically adjusts based on the available space without requiring media queries."
+
+    const newMessageId = messages.length + 1
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: newMessageId,
+        role: "assistant",
+        content: "",
+      },
+    ])
+
+    let charIndex = 0
+    streamContentRef.current = ""
+
+    streamIntervalRef.current = setInterval(() => {
+      if (charIndex < fullResponse.length) {
+        streamContentRef.current += fullResponse[charIndex]
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === newMessageId
+              ? { ...msg, content: streamContentRef.current }
+              : msg
+          )
+        )
+        charIndex++
+      } else {
+        clearInterval(streamIntervalRef.current!)
+        setIsStreaming(false)
+        setIsLoading(false)
+      }
+    }, 5)
+  }
+  const addMessage = () => {
+    // setIsStreaming(true);
+
+    // Add a new message
+    setMessages([
+      ...messages,
+      {
+        id: messages.length + 1,
+        role:
+          messages[messages.length - 1].role === "user" ? "assistant" : "user",
+        content:
+          messages[messages.length - 1].role === "user"
+            ? "That's a great question! Let me explain further. CSS Grid is a powerful layout system that allows for two-dimensional layouts. The `minmax()` function is particularly useful as it sets a minimum and maximum size for grid tracks."
+            : "Thanks for the explanation! Could you tell me more about grid areas?",
+      },
+    ])
+  }
+
+
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [files, setFiles] = useState<File[]>([])
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isChatStarted, setIsChatStarted] = useState(false)
+  const [liked, setLiked] = useState<boolean | null>(null)
+  const [copied, setCopied] = useState(false)
+
+
+
+  const handleCopy = () => {
+    const text =
+      "I can help with a variety of tasks:\n\n- Answering questions\n- Providing information\n- Assisting with coding\n- Generating creative content\n\nWhat would you like help with today?"
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const handleSubmit = () => {
     if (!input.trim()) return
     setIsLoading(true)
-    // TODO: 处理提交逻辑
+    setIsChatStarted(true)
     setTimeout(() => {
-      setIsLoading(false)
       setInput("")
-    }, 2000)
+      addMessage()
+      
+    }, 1000)
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,24 +157,115 @@ export default function Home() {
   return (
     <div className="flex h-screen">
       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      {/* 主要内容区域 */}
       <main className={cn(
-        "flex flex-1 flex-col transition-[margin] duration-300",
+        "flex flex-1 flex-col h-screen transition-[margin] duration-300",
         !isCollapsed && "ml-[260px]"
       )}>
         {/* Header */}
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-2">
-            
-            {/* <h1 className="text-xl font-semibold">ChatGPT</h1> */}
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex flex-1 flex-col items-center justify-center px-4">
-          <div className="w-full max-w-3xl">
-            <h1 className="mb-8 text-3xl font-semibold text-center">有什么可以帮忙的？</h1>
-            
+        <div className={cn(
+          "flex flex-col flex-1 overflow-hidden",
+          isChatStarted ? "relative" : "items-center justify-center"
+        )}>
+          {/* chat container */}
+          <div className="flex-1 overflow-hidden">
+            {!isChatStarted ? (
+              <h1 className="mb-8 text-3xl font-semibold text-center">有什么可以帮忙的？</h1>
+            ) : (
+              <ChatContainer
+                id="chat-container"
+                className="h-full space-y-8 p-4 max-w-3xl mx-auto"
+                autoScroll={autoScroll}
+                ref={chatContainerRef}
+              >
+                {messages.map((message) => {
+                  const isAssistant = message.role === "assistant"
+
+                  return (
+                    <Message
+                      key={message.id}
+                      className={cn(
+                        "gap-3",
+                        message.role === "user" ? "justify-end" : "justify-start"
+                      )}
+                    >
+                      {isAssistant ? (
+                        <>
+
+                          <div className="flex-1 ">
+                            <MessageContent markdown className="bg-transparent p-0">
+                              {message.content}
+                            </MessageContent>
+
+                            <MessageActions className="self-end">
+                              <MessageAction tooltip="Copy to clipboard">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full"
+                                  onClick={handleCopy}
+                                >
+                                  <Copy className={`size-4 ${copied ? "text-green-500" : ""}`} />
+                                </Button>
+                              </MessageAction>
+
+                              <MessageAction tooltip="Helpful">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className={`h-8 w-8 rounded-full ${liked === true ? "bg-green-100 text-green-500" : ""}`}
+                                  onClick={() => setLiked(true)}
+                                >
+                                  <ThumbsUp className="size-4" />
+                                </Button>
+                              </MessageAction>
+
+                              <MessageAction tooltip="Not helpful">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className={`h-8 w-8 rounded-full ${liked === false ? "bg-red-100 text-red-500" : ""}`}
+                                  onClick={() => setLiked(false)}
+                                >
+                                  <ThumbsDown className="size-4" />
+                                </Button>
+                              </MessageAction>
+                            </MessageActions>
+                          </div>
+                        </>
+
+                      ) : (
+
+                        <MessageContent>
+                          {message.content}
+                        </MessageContent>
+
+                      )}
+                    </Message>
+                  )
+                })}
+
+                <ScrollButton
+                  containerRef={chatContainerRef}
+                  scrollRef={chatContainerRef}
+                  className="shadow-sm"
+                />
+              </ChatContainer>
+            )
+            }
+
+          </div>
+
+          {/* chat input */}
+          <div className={cn(
+            "w-full max-w-3xl",
+            isChatStarted ? "mx-auto px-4 pb-4" : "px-4"
+          )}>
             <PromptInput
               value={input}
               onValueChange={setInput}
