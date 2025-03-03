@@ -11,20 +11,13 @@ import { ArrowUp, Paperclip, Square, X } from "lucide-react"
 import { useState } from "react"
 import { Sidebar } from "@/components/Sidebar"
 import { cn } from "@/lib/utils"
-import { SidebarButtonIcon } from "@/components/icons/SidebarButtonIcon"
 
 
 export default function Home() {
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [files, setFiles] = useState<File[]>([])
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sidebarCollapsed')
-      return saved ? JSON.parse(saved) : false
-    }
-    return false
-  })
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   const handleSubmit = () => {
     if (!input.trim()) return
@@ -125,7 +118,7 @@ export default function Home() {
                     onClick={handleSubmit}
                   >
                     {isLoading ? (
-                      <Square className="size-5 fill-current" />
+                      <Square className="size-3 fill-current" />
                     ) : (
                       <ArrowUp className="size-5" />
                     )}

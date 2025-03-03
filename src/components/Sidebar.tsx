@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction,useEffect } from 'react'
+import React, { Dispatch, SetStateAction } from 'react'
 import { NewChatIcon } from './icons/NewChatIcon'
 import { SearchChatIcon } from './icons/SearchChatIcon'
 import { SidebarButtonIcon } from './icons/SidebarButtonIcon'
@@ -11,17 +11,6 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
-    useEffect(() => {
-        const saved = localStorage.getItem('sidebarCollapsed')
-        if (saved !== null) {
-            setIsCollapsed(JSON.parse(saved))
-        }
-    }, [])
-
-    useEffect(() => {
-        localStorage.setItem('sidebarCollapsed', JSON.stringify(isCollapsed))
-    }, [isCollapsed])
-
     return (
         <>
             {/* 收起时的按钮组 */}
