@@ -8,9 +8,10 @@ import {
 } from "@/components/ui/prompt-input"
 import { Button } from "@/components/ui/button"
 import { ArrowUp, Paperclip, Square, X } from "lucide-react"
-import { useState} from "react"
+import { useState } from "react"
 import { Sidebar } from "@/components/Sidebar"
 import { cn } from "@/lib/utils"
+import { SidebarButtonIcon } from "@/components/icons/SidebarButtonIcon"
 
 
 export default function Home() {
@@ -50,12 +51,22 @@ export default function Home() {
       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       {/* 主要内容区域 */}
       <main className={cn(
-        "flex flex-1 transition-[margin] duration-300",
+        "flex flex-1 flex-col transition-[margin] duration-300",
         !isCollapsed && "ml-[260px]"
       )}>
-        <div className="mx-auto flex h-full w-full max-w-3xl flex-col p-4">
-          <div className="mb-4 flex flex-1 flex-col items-center justify-center">
-            <h1 className="mb-8 text-3xl font-semibold">有什么可以帮忙的？</h1>
+        {/* Header */}
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-2">
+            
+            {/* <h1 className="text-xl font-semibold">ChatGPT</h1> */}
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex flex-1 flex-col items-center justify-center px-4">
+          <div className="w-full max-w-3xl">
+            <h1 className="mb-8 text-3xl font-semibold text-center">有什么可以帮忙的？</h1>
+            
             <PromptInput
               value={input}
               onValueChange={setInput}
@@ -102,12 +113,6 @@ export default function Home() {
                       <Paperclip className="text-primary size-5" />
                     </label>
                   </PromptInputAction>
-                  {/* <button className="hover:bg-secondary-foreground/10 flex h-8 items-center gap-1 rounded-2xl px-3 text-sm text-gray-500">
-                    <span>搜索</span>
-                  </button>
-                  <button className="hover:bg-secondary-foreground/10 flex h-8 items-center gap-1 rounded-2xl px-3 text-sm text-gray-500">
-                    <span>推理</span>
-                  </button> */}
                 </div>
 
                 <PromptInputAction
