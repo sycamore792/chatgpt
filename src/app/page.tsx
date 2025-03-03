@@ -1,101 +1,136 @@
-import Image from "next/image";
+"use client"
+
+import {
+  PromptInput,
+  PromptInputAction,
+  PromptInputActions,
+  PromptInputTextarea,
+} from "@/components/ui/prompt-input"
+import { Button } from "@/components/ui/button"
+import { ArrowUp, Paperclip, Square, X } from "lucide-react"
+import { useState} from "react"
+import { Sidebar } from "@/components/Sidebar"
+import { cn } from "@/lib/utils"
+
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [input, setInput] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [files, setFiles] = useState<File[]>([])
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebarCollapsed')
+      return saved ? JSON.parse(saved) : false
+    }
+    return false
+  })
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleSubmit = () => {
+    if (!input.trim()) return
+    setIsLoading(true)
+    // TODO: 处理提交逻辑
+    setTimeout(() => {
+      setIsLoading(false)
+      setInput("")
+    }, 2000)
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFiles(Array.from(e.target.files))
+    }
+  }
+
+  const handleRemoveFile = (index: number) => {
+    setFiles(files.filter((_, i) => i !== index))
+  }
+
+  return (
+    <div className="flex h-screen">
+      <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+      {/* 主要内容区域 */}
+      <main className={cn(
+        "flex flex-1 transition-[margin] duration-300",
+        !isCollapsed && "ml-[260px]"
+      )}>
+        <div className="mx-auto flex h-full w-full max-w-3xl flex-col p-4">
+          <div className="mb-4 flex flex-1 flex-col items-center justify-center">
+            <h1 className="mb-8 text-3xl font-semibold">有什么可以帮忙的？</h1>
+            <PromptInput
+              value={input}
+              onValueChange={setInput}
+              isLoading={isLoading}
+              onSubmit={handleSubmit}
+              className="w-full shadow"
+            >
+              {files.length > 0 && (
+                <div className="flex flex-wrap gap-2 pb-2">
+                  {files.map((file, index) => (
+                    <div
+                      key={index}
+                      className="bg-secondary flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
+                    >
+                      <Paperclip className="size-4" />
+                      <span className="max-w-[120px] truncate">{file.name}</span>
+                      <button
+                        onClick={() => handleRemoveFile(index)}
+                        className="hover:bg-secondary/50 rounded-full p-1"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <PromptInputTextarea placeholder="询问任何问题..." />
+
+              <PromptInputActions className="flex items-center justify-between gap-2 pt-2">
+                <div className="flex items-center gap-2">
+                  <PromptInputAction tooltip="附加文件">
+                    <label
+                      htmlFor="file-upload"
+                      className="hover:bg-secondary-foreground/10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl"
+                    >
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleFileChange}
+                        className="hidden"
+                        id="file-upload"
+                      />
+                      <Paperclip className="text-primary size-5" />
+                    </label>
+                  </PromptInputAction>
+                  {/* <button className="hover:bg-secondary-foreground/10 flex h-8 items-center gap-1 rounded-2xl px-3 text-sm text-gray-500">
+                    <span>搜索</span>
+                  </button>
+                  <button className="hover:bg-secondary-foreground/10 flex h-8 items-center gap-1 rounded-2xl px-3 text-sm text-gray-500">
+                    <span>推理</span>
+                  </button> */}
+                </div>
+
+                <PromptInputAction
+                  tooltip={isLoading ? "停止生成" : "发送消息"}
+                >
+                  <Button
+                    variant="default"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
+                    onClick={handleSubmit}
+                  >
+                    {isLoading ? (
+                      <Square className="size-5 fill-current" />
+                    ) : (
+                      <ArrowUp className="size-5" />
+                    )}
+                  </Button>
+                </PromptInputAction>
+              </PromptInputActions>
+            </PromptInput>
+          </div>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
-  );
+  )
 }
