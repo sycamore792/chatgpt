@@ -19,7 +19,7 @@ import {
   MessageActions,
 } from "@/components/ui/message"
 import { Copy, ThumbsDown, ThumbsUp } from "lucide-react"
-
+import { Layout } from '@/components/Layout'
 
 export default function Home() {
   const [autoScroll, setAutoScroll] = useState(true)
@@ -122,6 +122,7 @@ export default function Home() {
   const [isChatStarted, setIsChatStarted] = useState(false)
   const [liked, setLiked] = useState<boolean | null>(null)
   const [copied, setCopied] = useState(false)
+  const [titleInput, setTitleInput] = useState("")
 
 
 
@@ -134,14 +135,35 @@ export default function Home() {
   }
 
   const handleSubmit = () => {
-    if (!input.trim()) return
-    setIsLoading(true)
-    setIsChatStarted(true)
-    setTimeout(() => {
-      setInput("")
-      addMessage()
-      
-    }, 1000)
+    if (isChatStarted) {
+      if (!input.trim()) return
+      setIsLoading(true)
+      setTimeout(() => {
+        setInput("")
+        addMessage()
+        setIsLoading(false)
+      }, 1000)
+    } else {
+      if (!titleInput.trim() && !input.trim()) return
+      setIsLoading(true)
+      setIsChatStarted(true)
+      setTimeout(() => {
+        const content = titleInput.trim()
+          ? `${titleInput}\n\n${input}`
+          : input
+        setMessages([
+          ...messages,
+          {
+            id: messages.length + 1,
+            role: "user",
+            content: content,
+          },
+        ])
+        setTitleInput("")
+        setInput("")
+        setIsLoading(false)
+      }, 1000)
+    }
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,186 +177,275 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen">
+
+    <div className="flex ">
       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={cn(
-        "flex flex-1 flex-col h-screen transition-[margin] duration-300",
-        !isCollapsed && "ml-[260px]"
-      )}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-2">
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className={cn(
-          "flex flex-col flex-1 overflow-hidden",
-          isChatStarted ? "relative" : "items-center justify-center"
-        )}>
-          {/* chat container */}
-          <div className="flex-1 overflow-hidden">
-            {!isChatStarted ? (
-              <h1 className="mb-8 text-3xl font-semibold text-center">有什么可以帮忙的？</h1>
-            ) : (
-              <ChatContainer
-                id="chat-container"
-                className="h-full space-y-8 p-4 max-w-3xl mx-auto"
-                autoScroll={autoScroll}
-                ref={chatContainerRef}
-              >
-                {messages.map((message) => {
-                  const isAssistant = message.role === "assistant"
-
-                  return (
-                    <Message
-                      key={message.id}
-                      className={cn(
-                        "gap-3",
-                        message.role === "user" ? "justify-end" : "justify-start"
-                      )}
-                    >
-                      {isAssistant ? (
-                        <>
-
-                          <div className="flex-1 ">
-                            <MessageContent markdown className="bg-transparent p-0">
-                              {message.content}
-                            </MessageContent>
-
-                            <MessageActions className="self-end">
-                              <MessageAction tooltip="Copy to clipboard">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 rounded-full"
-                                  onClick={handleCopy}
-                                >
-                                  <Copy className={`size-4 ${copied ? "text-green-500" : ""}`} />
-                                </Button>
-                              </MessageAction>
-
-                              <MessageAction tooltip="Helpful">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className={`h-8 w-8 rounded-full ${liked === true ? "bg-green-100 text-green-500" : ""}`}
-                                  onClick={() => setLiked(true)}
-                                >
-                                  <ThumbsUp className="size-4" />
-                                </Button>
-                              </MessageAction>
-
-                              <MessageAction tooltip="Not helpful">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className={`h-8 w-8 rounded-full ${liked === false ? "bg-red-100 text-red-500" : ""}`}
-                                  onClick={() => setLiked(false)}
-                                >
-                                  <ThumbsDown className="size-4" />
-                                </Button>
-                              </MessageAction>
-                            </MessageActions>
-                          </div>
-                        </>
-
-                      ) : (
-
-                        <MessageContent>
-                          {message.content}
-                        </MessageContent>
-
-                      )}
-                    </Message>
-                  )
-                })}
-
-                <ScrollButton
-                  containerRef={chatContainerRef}
-                  scrollRef={chatContainerRef}
-                  className="shadow-sm"
-                />
-              </ChatContainer>
-            )
-            }
-
-          </div>
-
-          {/* chat input */}
-          <div className={cn(
-            "w-full max-w-3xl",
-            isChatStarted ? "mx-auto px-4 pb-4" : "px-4"
-          )}>
-            <PromptInput
-              value={input}
-              onValueChange={setInput}
-              isLoading={isLoading}
-              onSubmit={handleSubmit}
-              className="w-full shadow"
-            >
-              {files.length > 0 && (
-                <div className="flex flex-wrap gap-2 pb-2">
-                  {files.map((file, index) => (
-                    <div
-                      key={index}
-                      className="bg-secondary flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
-                    >
-                      <Paperclip className="size-4" />
-                      <span className="max-w-[120px] truncate">{file.name}</span>
-                      <button
-                        onClick={() => handleRemoveFile(index)}
-                        className="hover:bg-secondary/50 rounded-full p-1"
-                      >
-                        <X className="size-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <PromptInputTextarea placeholder="询问任何问题..." />
-
-              <PromptInputActions className="flex items-center justify-between gap-2 pt-2">
+      <main className="flex-1">
+        <div >
+          <div className="flex h-screen">
+            <main className={cn(
+              "flex flex-1 flex-col h-screen",
+            )}>
+              {/* Header */}
+              <div className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-2">
-                  <PromptInputAction tooltip="附加文件">
-                    <label
-                      htmlFor="file-upload"
-                      className="hover:bg-secondary-foreground/10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl"
+                </div>
+              </div>
+
+              {/* Main Content */}
+              <div className={cn(
+                "flex flex-col flex-1 overflow-hidden",
+                isChatStarted ? "relative" : "items-center justify-center"
+              )}>
+                {/* chat container */}
+                <div className={cn(
+                  "flex-1 overflow-hidden w-full",
+                  !isChatStarted && "flex flex-col items-center justify-center"
+                )}>
+                  {!isChatStarted ? (
+                    <>
+                      <h1 className="mb-8 text-3xl font-semibold text-center">有什么可以帮忙的？</h1>
+
+                      {/* 中间的输入框区域 */}
+                      <div className="w-full max-w-3xl px-4">
+
+                        <PromptInput
+                          value={input}
+                          onValueChange={setInput}
+                          isLoading={isLoading}
+                          onSubmit={handleSubmit}
+                          className="w-full shadow"
+                        >
+                          {files.length > 0 && (
+                            <div className="flex flex-wrap gap-2 pb-2">
+                              {files.map((file, index) => (
+                                <div
+                                  key={index}
+                                  className="bg-secondary flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
+                                >
+                                  <Paperclip className="size-4" />
+                                  <span className="max-w-[120px] truncate">{file.name}</span>
+                                  <button
+                                    onClick={() => handleRemoveFile(index)}
+                                    className="hover:bg-secondary/50 rounded-full p-1"
+                                  >
+                                    <X className="size-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <PromptInputTextarea placeholder="询问任何问题..." />
+
+                          <PromptInputActions className="flex items-center justify-between gap-2 pt-2">
+                            <div className="flex items-center gap-2">
+                              <PromptInputAction tooltip="附加文件">
+                                <label
+                                  htmlFor="file-upload-bottom"
+                                  className="hover:bg-secondary-foreground/10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl"
+                                >
+                                  <input
+                                    type="file"
+                                    multiple
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                    id="file-upload-bottom"
+                                  />
+                                  <Paperclip className="text-primary size-5" />
+                                </label>
+                              </PromptInputAction>
+                            </div>
+
+                            <PromptInputAction
+                              tooltip={isLoading ? "停止生成" : "发送消息"}
+                            >
+                              <Button
+                                variant="default"
+                                size="icon"
+                                className="h-8 w-8 rounded-full"
+                                onClick={handleSubmit}
+                              >
+                                {isLoading ? (
+                                  <Square className="size-3 fill-current" />
+                                ) : (
+                                  <ArrowUp className="size-5" />
+                                )}
+                              </Button>
+                            </PromptInputAction>
+                          </PromptInputActions>
+                        </PromptInput>
+
+                      </div>
+                    </>
+                  ) : (
+                    <ChatContainer
+                      id="chat-container"
+                      className="h-full"
+                      autoScroll={autoScroll}
+                      ref={chatContainerRef}
                     >
-                      <input
-                        type="file"
-                        multiple
-                        onChange={handleFileChange}
-                        className="hidden"
-                        id="file-upload"
-                      />
-                      <Paperclip className="text-primary size-5" />
-                    </label>
-                  </PromptInputAction>
+                      <div className="space-y-8  p-70 ">
+                        {messages.map((message) => {
+                          const isAssistant = message.role === "assistant"
+
+                          return (
+                            <Message
+                              key={message.id}
+                              className={cn(
+                                "gap-3 ",
+                                message.role === "user" ? "justify-end" : "justify-start"
+                              )}
+                            >
+                              {isAssistant ? (
+                                <>
+                                  <div className="flex-1 ">
+                                    <MessageContent markdown className="bg-transparent p-0">
+                                      {message.content}
+                                    </MessageContent>
+                                    <MessageActions className="self-end">
+                                      <MessageAction tooltip="Copy to clipboard">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 rounded-full"
+                                          onClick={handleCopy}
+                                        >
+                                          <Copy className={`size-4 ${copied ? "text-green-500" : ""}`} />
+                                        </Button>
+                                      </MessageAction>
+
+                                      <MessageAction tooltip="Helpful">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className={`h-8 w-8 rounded-full ${liked === true ? "bg-green-100 text-green-500" : ""}`}
+                                          onClick={() => setLiked(true)}
+                                        >
+                                          <ThumbsUp className="size-4" />
+                                        </Button>
+                                      </MessageAction>
+
+                                      <MessageAction tooltip="Not helpful">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className={`h-8 w-8 rounded-full ${liked === false ? "bg-red-100 text-red-500" : ""}`}
+                                          onClick={() => setLiked(false)}
+                                        >
+                                          <ThumbsDown className="size-4" />
+                                        </Button>
+                                      </MessageAction>
+                                    </MessageActions>
+                                  </div>
+
+
+                                </>
+
+                              ) : (
+
+                                <MessageContent>
+                                  {message.content}
+                                </MessageContent>
+
+                              )}
+                            </Message>
+                          )
+                        })}
+                      </div>
+
+
+                    </ChatContainer>
+                  )}
                 </div>
 
-                <PromptInputAction
-                  tooltip={isLoading ? "停止生成" : "发送消息"}
-                >
-                  <Button
-                    variant="default"
-                    size="icon"
-                    className="h-8 w-8 rounded-full"
-                    onClick={handleSubmit}
-                  >
-                    {isLoading ? (
-                      <Square className="size-3 fill-current" />
-                    ) : (
-                      <ArrowUp className="size-5" />
-                    )}
-                  </Button>
-                </PromptInputAction>
-              </PromptInputActions>
-            </PromptInput>
+                {/* chat input - 只在isChatStarted为true时显示在底部 */}
+                {isChatStarted && (
+                  <div className="w-full max-w-3xl mx-auto px-4 pb-4 ">
+
+                    <div className="flex justify-center mb-2">
+                      <ScrollButton
+                        containerRef={chatContainerRef}
+                        scrollRef={chatContainerRef}
+                        className="shadow-sm"
+                      />
+                    </div>
+
+                    <PromptInput
+                      value={input}
+                      onValueChange={setInput}
+                      isLoading={isLoading}
+                      onSubmit={handleSubmit}
+                      className="w-full shadow"
+                    >
+                      {files.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pb-2">
+                          {files.map((file, index) => (
+                            <div
+                              key={index}
+                              className="bg-secondary flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
+                            >
+                              <Paperclip className="size-4" />
+                              <span className="max-w-[120px] truncate">{file.name}</span>
+                              <button
+                                onClick={() => handleRemoveFile(index)}
+                                className="hover:bg-secondary/50 rounded-full p-1"
+                              >
+                                <X className="size-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <PromptInputTextarea placeholder="询问任何问题..." />
+
+                      <PromptInputActions className="flex items-center justify-between gap-2 pt-2">
+                        <div className="flex items-center gap-2">
+                          <PromptInputAction tooltip="附加文件">
+                            <label
+                              htmlFor="file-upload-bottom"
+                              className="hover:bg-secondary-foreground/10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl"
+                            >
+                              <input
+                                type="file"
+                                multiple
+                                onChange={handleFileChange}
+                                className="hidden"
+                                id="file-upload-bottom"
+                              />
+                              <Paperclip className="text-primary size-5" />
+                            </label>
+                          </PromptInputAction>
+                        </div>
+
+                        <PromptInputAction
+                          tooltip={isLoading ? "停止生成" : "发送消息"}
+                        >
+                          <Button
+                            variant="default"
+                            size="icon"
+                            className="h-8 w-8 rounded-full"
+                            onClick={handleSubmit}
+                          >
+                            {isLoading ? (
+                              <Square className="size-3 fill-current" />
+                            ) : (
+                              <ArrowUp className="size-5" />
+                            )}
+                          </Button>
+                        </PromptInputAction>
+                      </PromptInputActions>
+                    </PromptInput>
+                  </div>
+                )}
+              </div>
+            </main>
           </div>
         </div>
       </main>
     </div>
+
+
   )
 }

@@ -15,7 +15,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         <>
             {/* 收起时的按钮组 */}
             <div className={cn(
-                "fixed left-4 top-4 flex items-center gap-1 transition-opacity duration-600",
+                "fixed left-4 top-4 flex items-center gap-1 transition-opacity duration-600 z-50",
                 isCollapsed ? "opacity-100" : "opacity-0 pointer-events-none"
             )}>
                 <TooltipButton
@@ -38,11 +38,11 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
 
             {/* 边栏 */}
             <div className={cn(
-                "fixed left-0 top-0 flex min-h-screen w-[260px] flex-col bg-gray-50 transition-transform duration-400",
-                isCollapsed ? "-translate-x-full" : "translate-x-0"
+                "flex h-screen flex-col bg-gray-50 transition-[width] duration-300 ease-in-out overflow-hidden",
+                isCollapsed ? "w-0" : "w-[260px]"
             )}>
                 {/* 顶部栏 */}
-                <div className="flex items-center justify-between px-4 py-3">
+                <div className=" flex items-center justify-between px-4 py-4">
                     <div>
                         <TooltipButton
                             tooltip="关闭边栏"
