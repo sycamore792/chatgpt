@@ -6,9 +6,11 @@ import {
   PromptInputActions,
   PromptInputTextarea,
 } from "@/components/ui/prompt-input"
+
 import { ScrollButton } from "@/components/ui/scroll-button"
 import { Button } from "@/components/ui/button"
 import { ArrowUp, Paperclip, Square, X } from "lucide-react"
+import { Loader } from "@/components/ui/loader"
 import { useEffect, useRef, useState } from "react"
 import { Sidebar } from "@/components/Sidebar"
 import { cn } from "@/lib/utils"
@@ -19,54 +21,63 @@ import {
   MessageActions,
 } from "@/components/ui/message"
 import { Copy, ThumbsDown, ThumbsUp } from "lucide-react"
-import { Layout } from '@/components/Layout'
+import { chatAPI, type ChatMessage } from "@/lib/api"
+import { TooltipButton } from "@/components/ui/tooltip-button"
+import { NewChatIcon } from "@/components/icons/NewChatIcon"
+import { SidebarButtonIcon } from "@/components/icons/SidebarButtonIcon"
 
 export default function Home() {
   const [autoScroll, setAutoScroll] = useState(true)
   const [isStreaming, setIsStreaming] = useState(false)
   const chatContainerRef = useRef<HTMLDivElement>(null)
-  const streamIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const streamContentRef = useRef("")
+  const [currentStreamingId, setCurrentStreamingId] = useState<number | null>(null)
 
+  // 初始欢迎消息
+  const [messages, setMessages] = useState<ChatMessage[]>([])
 
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      role: "user",
-      content: "Hello! Can you help me with a coding question?",
-    },
-    {
-      id: 2,
-      role: "assistant",
-      content:
-        "## Of course! I'd be happy to help with your coding question. What would you like to know?",
-    },
-    {
-      id: 3,
-      role: "user",
-      content: "How do I create a responsive layout with CSS Grid?",
-    },
-    {
-      id: 4,
-      role: "assistant",
-      content:
-        " Creating a responsive layout with CSS Grid is straightforward. Here's a basic example:\n\n```css\n.container {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));\n  gap: 1rem;\n}\n```\n\nThis creates a grid where:\n- Columns automatically fit as many as possible\n- Each column is at least 250px wide\n- Columns expand to fill available space\n- There's a 1rem gap between items\n\nWould you like me to explain more about how this works?",
-    },
-  ])
+  // 重置对话
+  const resetChat = () => {
+    setMessages([])
+    setIsChatStarted(false)
+    setInput("")
+    setTitleInput("")
+    setFiles([])
+    setCurrentStreamingId(null)
+    chatAPI.clearHistory()
+  }
+
+  // 处理文件上传
+  const handleFileUpload = async (file: File) => {
+    try {
+      // 这里可以添加文件处理逻辑
+      const reader = new FileReader()
+      reader.onload = async (e) => {
+        const content = e.target?.result as string
+        addMessage("user", `我上传了一个文件：${file.name}\n\n${content}`)
+      }
+      reader.readAsText(file)
+    } catch (error) {
+      console.error('文件处理失败:', error)
+    }
+  }
+
   useEffect(() => {
     if (messages.length > 0 && messages[messages.length - 1].role === "user") {
-      streamResponse()
+      streamChatResponse()
     }
   }, [messages]);
-  const streamResponse = () => {
+
+  const streamChatResponse = async () => {
     if (isStreaming) return
 
     setIsStreaming(true)
-    const fullResponse =
-      "Yes, I'd be happy to explain more about CSS Grid! The `grid-template-columns` property defines the columns in your grid. The `repeat()` function is a shorthand that repeats a pattern. `auto-fit` will fit as many columns as possible in the available space. The `minmax()` function sets a minimum and maximum size for each column. This creates a responsive layout that automatically adjusts based on the available space without requiring media queries."
-
+    const userInput = messages[messages.length - 1].content
     const newMessageId = messages.length + 1
-    setMessages((prev) => [
+    
+    // 设置当前正在流式传输的消息 ID
+    setCurrentStreamingId(newMessageId)
+
+    setMessages(prev => [
       ...prev,
       {
         id: newMessageId,
@@ -75,45 +86,48 @@ export default function Home() {
       },
     ])
 
-    let charIndex = 0
-    streamContentRef.current = ""
-
-    streamIntervalRef.current = setInterval(() => {
-      if (charIndex < fullResponse.length) {
-        streamContentRef.current += fullResponse[charIndex]
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === newMessageId
-              ? { ...msg, content: streamContentRef.current }
-              : msg
+    try {
+      await chatAPI.streamChatResponse(
+        userInput,
+        (content) => {
+          setMessages(prev =>
+            prev.map(msg =>
+              msg.id === newMessageId
+                ? { ...msg, content }
+                : msg
+            )
           )
-        )
-        charIndex++
-      } else {
-        clearInterval(streamIntervalRef.current!)
-        setIsStreaming(false)
-        setIsLoading(false)
-      }
-    }, 5)
-  }
-  const addMessage = () => {
-    // setIsStreaming(true);
 
-    // Add a new message
+          // 自动滚动到底部
+          if (chatContainerRef.current && autoScroll) {
+            chatContainerRef.current.scrollTo({
+              top: chatContainerRef.current.scrollHeight,
+              behavior: 'smooth'
+            })
+          }
+        },
+        handleError
+      )
+    } catch (error) {
+      handleError(error)
+    } finally {
+      setIsStreaming(false)
+      // 重置当前流式传输的消息 ID
+      setCurrentStreamingId(null)
+      setIsLoading(false)
+    }
+  }
+
+  const addMessage = (role: string, content: string) => {
     setMessages([
       ...messages,
       {
         id: messages.length + 1,
-        role:
-          messages[messages.length - 1].role === "user" ? "assistant" : "user",
-        content:
-          messages[messages.length - 1].role === "user"
-            ? "That's a great question! Let me explain further. CSS Grid is a powerful layout system that allows for two-dimensional layouts. The `minmax()` function is particularly useful as it sets a minimum and maximum size for grid tracks."
-            : "Thanks for the explanation! Could you tell me more about grid areas?",
+        role: role as "user" | "assistant",
+        content: content
       },
     ])
   }
-
 
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -124,8 +138,6 @@ export default function Home() {
   const [copied, setCopied] = useState(false)
   const [titleInput, setTitleInput] = useState("")
 
-
-
   const handleCopy = () => {
     const text =
       "I can help with a variety of tasks:\n\n- Answering questions\n- Providing information\n- Assisting with coding\n- Generating creative content\n\nWhat would you like help with today?"
@@ -134,41 +146,80 @@ export default function Home() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleSubmit = () => {
-    if (isChatStarted) {
-      if (!input.trim()) return
+  const handleSubmit = async () => {
+    try {
+      let _input = input.trim()
+
+      if (!_input && (!isChatStarted || !titleInput.trim())) {
+        return
+      }
+
       setIsLoading(true)
-      setTimeout(() => {
+
+      if (isChatStarted) {
+        // 已开始对话，直接添加用户消息
+        addMessage("user", _input)
         setInput("")
-        addMessage()
-        setIsLoading(false)
-      }, 1000)
-    } else {
-      if (!titleInput.trim() && !input.trim()) return
-      setIsLoading(true)
-      setIsChatStarted(true)
-      setTimeout(() => {
+      } else {
+        // 首次开始对话
         const content = titleInput.trim()
-          ? `${titleInput}\n\n${input}`
-          : input
-        setMessages([
-          ...messages,
-          {
-            id: messages.length + 1,
-            role: "user",
-            content: content,
-          },
-        ])
+          ? `${titleInput}\n\n${_input}`
+          : _input
+
+        setIsChatStarted(true)
+        addMessage("user", content)
         setTitleInput("")
         setInput("")
+      }
+
+      // 自动滚动到底部
+      if (chatContainerRef.current) {
+        setTimeout(() => {
+          chatContainerRef.current?.scrollTo({
+            top: chatContainerRef.current.scrollHeight,
+            behavior: 'smooth'
+          })
+        }, 100)
+      }
+
+    } catch (error) {
+      console.error('提交消息失败:', error)
+      // 可以在这里添加错误提示UI
+    } finally {
+      // 如果没有触发streamChatResponse，需要在这里关闭loading
+      if (!messages.length || messages[messages.length - 1].role !== 'user') {
         setIsLoading(false)
-      }, 1000)
+      }
     }
+  }
+
+  // 添加一个处理错误的函数
+  const handleError = (error: any) => {
+    console.error('Stream failed:', error)
+    setMessages(prev => {
+      const lastMessage = prev[prev.length - 1]
+      if (lastMessage && lastMessage.role === 'assistant' && !lastMessage.content) {
+        // 如果最后一条是空的助手消息，则添加错误提示
+        return prev.map(msg =>
+          msg.id === lastMessage.id
+            ? { ...msg, content: '抱歉，处理您的请求时出现错误。请重试。' }
+            : msg
+        )
+      }
+      return prev
+    })
+    
+    // 重置流式传输状态
+    setIsStreaming(false)
+    setCurrentStreamingId(null)
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setFiles(Array.from(e.target.files))
+      const newFiles = Array.from(e.target.files)
+      setFiles(prev => [...prev, ...newFiles])
+      // 处理新上传的文件
+      newFiles.forEach(handleFileUpload)
     }
   }
 
@@ -177,9 +228,12 @@ export default function Home() {
   }
 
   return (
-
     <div className="flex ">
-      <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+      <Sidebar
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
+        onNewChat={resetChat}
+      />
       <main className="flex-1">
         <div >
           <div className="flex h-screen">
@@ -188,8 +242,40 @@ export default function Home() {
             )}>
               {/* Header */}
               <div className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-2">
+                {/* 收起时的按钮组 */}
+                <div className={cn(
+                  "fixed left-4 top-4 flex items-center gap-1 transition-opacity duration-600 z-50",
+                  isCollapsed ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}>
+                  <TooltipButton
+                    tooltip="展开边栏"
+                    placement="bottom"
+                    onClick={() => setIsCollapsed(false)}
+                  >
+                    <SidebarButtonIcon />
+                  </TooltipButton>
+                  <TooltipButton
+                    tooltip="新聊天"
+                    placement="bottom"
+                    onClick={resetChat}
+                  >
+                    <NewChatIcon />
+                  </TooltipButton>
                 </div>
+
+                <div className={cn(
+                  isCollapsed ? "ml-24" : "ml-0"
+                )}>
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    onClick={resetChat}
+                    className="text-muted-foreground font-bold text-gray-600 text-xl"
+                  >
+                    GPT-4o
+                  </Button>
+                </div>
+
               </div>
 
               {/* Main Content */}
@@ -300,9 +386,18 @@ export default function Home() {
                               {isAssistant ? (
                                 <>
                                   <div className="flex-1 ">
-                                    <MessageContent markdown className="bg-transparent p-0">
+                                    <MessageContent 
+                                      markdown 
+                                      className={cn(
+                                        "bg-transparent p-0",
+                                        isStreaming && message.id === currentStreamingId ? "typing-message" : ""
+                                      )}
+                                      typewriterCursor={isStreaming && message.id === currentStreamingId}
+                                    >
+                                      
                                       {message.content}
                                     </MessageContent>
+                                    {/* <Loader variant={"pulse-dot"} text={message.content} /> */}
                                     <MessageActions className="self-end">
                                       <MessageAction tooltip="Copy to clipboard">
                                         <Button

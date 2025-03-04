@@ -8,33 +8,17 @@ import { cn } from '@/lib/utils'
 interface SidebarProps {
     isCollapsed: boolean
     setIsCollapsed: Dispatch<SetStateAction<boolean>>
+    onNewChat?: () => void
 }
 
-export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
+export function Sidebar({ isCollapsed, setIsCollapsed, onNewChat }: SidebarProps) {
+    const handleNewChat = () => {
+        onNewChat?.()
+    }
+
     return (
         <>
-            {/* 收起时的按钮组 */}
-            <div className={cn(
-                "fixed left-4 top-4 flex items-center gap-1 transition-opacity duration-600 z-50",
-                isCollapsed ? "opacity-100" : "opacity-0 pointer-events-none"
-            )}>
-                <TooltipButton
-                    tooltip="展开边栏"
-                    placement="bottom"
-                    onClick={() => setIsCollapsed(false)}
-                >
-                    <SidebarButtonIcon />
-                </TooltipButton>
-                <TooltipButton
-                    tooltip="新聊天"
-                    placement="bottom"
-                    onClick={() => {
-                        console.log('新建会话')
-                    }}
-                >
-                    <NewChatIcon />
-                </TooltipButton>
-            </div>
+            
 
             {/* 边栏 */}
             <div className={cn(
@@ -67,9 +51,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                         <TooltipButton
                             tooltip="新聊天"
                             placement="bottom"
-                            onClick={() => {
-                                console.log('新建会话')
-                            }}
+                            onClick={handleNewChat}
                         >
                             <NewChatIcon />
                         </TooltipButton>

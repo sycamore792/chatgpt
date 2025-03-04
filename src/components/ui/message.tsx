@@ -48,6 +48,7 @@ export type MessageContentProps = {
   children: React.ReactNode
   markdown?: boolean
   className?: string
+  typewriterCursor?: boolean
 } & React.ComponentProps<typeof Markdown> &
   React.HTMLProps<HTMLDivElement>
 
@@ -55,6 +56,7 @@ const MessageContent = ({
   children,
   markdown = false,
   className,
+  typewriterCursor = false,
   ...props
 }: MessageContentProps) => {
   const classNames = cn(
@@ -62,13 +64,23 @@ const MessageContent = ({
     className
   )
 
-  return markdown ? (
+  // 如果是 markdown 且需要显示光标，直接在内容后添加一个特殊字符
+  const contentWithCursor = typewriterCursor && typeof children === 'string'
+    ? `${children} ⚫`
+    : children;
+
+  return (
     <div className={classNames}>
-      <Markdown {...props}>{children as string}</Markdown>
-    </div>
-  ) : (
-    <div className={classNames} {...props}>
-      {children}
+      {markdown ? (
+        <Markdown {...props}>{contentWithCursor as string}</Markdown>
+      ) : (
+        <>
+          {children}
+          {typewriterCursor && (
+            <span className="inline-block w-[15px] h-[15px] bg-black rounded-full ml-[3px] align-middle"></span>
+          )}
+        </>
+      )}
     </div>
   )
 }
