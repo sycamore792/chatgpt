@@ -18,6 +18,17 @@ An open-source implementation of ChatGPT, featuring a pixel-perfect UI that matc
 - 🔍 Chat search functionality
 - 📱 Mobile-friendly design
 
+### Screenshots
+
+![Main Interface](/assets/example1.png)
+*Main chat interface with sidebar*
+
+![Mobile View](/assets/example2.png)
+*Responsive mobile interface*
+
+![Dark Mode](/assets/example3.png)
+*Dark mode support*
+
 ### Tech Stack
 
 - Next.js 15
@@ -72,9 +83,20 @@ pnpm dev
 - 🔍 聊天搜索功能
 - 📱 移动端友好设计
 
+### 截图展示
+
+![主界面](/assets/example1.png)
+*带侧边栏的主聊天界面*
+
+![移动端视图](/assets/example2.png)
+*响应式移动端界面*
+
+![深色模式](/assets/example3.png)
+*深色模式支持*
+
 ### 技术栈
 
-- Next.js 14
+- Next.js 15
 - React
 - TypeScript
 - Tailwind CSS
