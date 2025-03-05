@@ -9,7 +9,7 @@ An open-source implementation of ChatGPT, featuring a pixel-perfect UI that matc
 ### Features
 
 - 💯 Pixel-perfect UI matching OpenAI's ChatGPT
-- 🚀 Built with modern tech stack (Next.js 14, React, TypeScript, Tailwind CSS)
+- 🚀 Built with modern tech stack (Next.js 15, React, TypeScript, Tailwind CSS)
 - 💻 Responsive design that works on all devices
 - 🎨 Clean and intuitive user interface
 - 📁 File attachment support
@@ -42,7 +42,7 @@ An open-source implementation of ChatGPT, featuring a pixel-perfect UI that matc
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/chatgpt-clone.git
+git clone https://github.com/sycamore792/chatgpt.git
 ```
 
 2. Install dependencies
@@ -74,7 +74,7 @@ pnpm dev
 ### 特点
 
 - 💯 完美还原 OpenAI ChatGPT 的界面设计
-- 🚀 采用现代技术栈开发（Next.js 14、React、TypeScript、Tailwind CSS）
+- 🚀 采用现代技术栈开发（Next.js 15、React、TypeScript、Tailwind CSS）
 - 💻 响应式设计，适配各种设备
 - 🎨 清爽直观的用户界面
 - 📁 支持文件附件功能
@@ -107,7 +107,7 @@ pnpm dev
 
 1. 克隆仓库
 ```bash
-git clone https://github.com/yourusername/chatgpt-clone.git
+git clone https://github.com/sycamore792/chatgpt.git
 ```
 
 2. 安装依赖
