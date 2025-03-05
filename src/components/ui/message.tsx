@@ -60,7 +60,7 @@ const MessageContent = ({
   ...props
 }: MessageContentProps) => {
   const classNames = cn(
-    "rounded-lg p-2 text-foreground bg-secondary prose break-words whitespace-normal",
+    "rounded-lg p-2 text-foreground bg-secondary prose break-words whitespace-normal ",
     className
   )
 
@@ -72,7 +72,7 @@ const MessageContent = ({
   return (
     <div className={classNames}>
       {markdown ? (
-        <Markdown {...props}>{contentWithCursor as string}</Markdown>
+        <Markdown {...props} className="leading-loose my-2 prose prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs">{contentWithCursor as string}</Markdown>
       ) : (
         <>
           {children}
