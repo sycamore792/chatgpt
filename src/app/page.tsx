@@ -371,7 +371,7 @@ export default function Home() {
                       autoScroll={autoScroll}
                       ref={chatContainerRef}
                     >
-                      <div className="space-y-8  p-70 ">
+                      <div className="space-y-2  px-70 ">
                         {messages.map((message) => {
                           const isAssistant = message.role === "assistant"
 
@@ -433,8 +433,6 @@ export default function Home() {
                                       </MessageAction>
                                     </MessageActions>
                                   </div>
-
-
                                 </>
 
                               ) : (
