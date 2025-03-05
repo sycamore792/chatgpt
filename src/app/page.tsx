@@ -25,6 +25,7 @@ import { chatAPI, type ChatMessage } from "@/lib/api"
 import { TooltipButton } from "@/components/ui/tooltip-button"
 import { NewChatIcon } from "@/components/icons/NewChatIcon"
 import { SidebarButtonIcon } from "@/components/icons/SidebarButtonIcon"
+import { GithubIcon } from "@/components/icons/GithubIcon"
 
 export default function Home() {
   const [autoScroll, setAutoScroll] = useState(true)
@@ -276,6 +277,16 @@ export default function Home() {
                 </Button>
               </div>
 
+              {/* GitHub logo */}
+              <div className="ml-auto mr-4">
+                <TooltipButton
+                  tooltip="访问GitHub仓库"
+                  placement="bottom"
+                  onClick={() => window.open('https://github.com/sycamore792/chatgpt', '_blank')}
+                >
+                  <GithubIcon />
+                </TooltipButton>
+              </div>
             </div>
 
             {/* Main Content */}
