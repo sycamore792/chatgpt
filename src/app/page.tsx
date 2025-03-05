@@ -463,15 +463,15 @@ export default function Home() {
                   </ChatContainer>
                 )}
               </div>
-              <ScrollButton
+              
+              {/* chat input - 只在isChatStarted为true时显示在底部 */}
+              {isChatStarted && (
+                <div className="w-full max-w-3xl mx-auto px-4 pb-4 ">
+<ScrollButton
                       containerRef={chatContainerRef}
                       scrollRef={chatContainerRef}
                       className="shadow-sm cursor-pointer absolute z-10 rounded-full  border text-token-text-secondary border-token-border-light right-1/2 translate-x-1/2 bg-white w-8 h-8 flex items-center justify-center bottom-32"
                     />
-              {/* chat input - 只在isChatStarted为true时显示在底部 */}
-              {isChatStarted && (
-                <div className="w-full max-w-3xl mx-auto px-4 pb-4 ">
-
                   <div className="flex justify-center mb-2">
                    
                   </div>
